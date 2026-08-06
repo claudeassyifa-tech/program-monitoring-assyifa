@@ -555,7 +555,7 @@ const DIVISI=["Marketing","Operasional","Keuangan"];
 const DICO={Marketing:"📣",Operasional:"⚙️",Keuangan:"💰"};
 const DCLASS={Marketing:"m",Operasional:"o",Keuangan:"k"};
 const STAFF_BY_DIV={Marketing:ACCOUNTS.filter(a=>a.role==="staff"&&a.divisi==="Marketing"),Operasional:ACCOUNTS.filter(a=>(a.role==="staff"||a.role==="manajer_op")&&a.divisi==="Operasional"),Keuangan:ACCOUNTS.filter(a=>a.role==="staff"&&a.divisi==="Keuangan")};
-let sb=null, realtimeChannels=[];
+let sb=null, realtimeChannels=[], unsubP=null, unsubL=null, unsubMP=null, unsubSP=null;
 let S={user:null,bulan:new Date().getMonth(),tahun:new Date().getFullYear(),pekan:0,tab:"input",mgrTab:"myprog",search:"",fStat:"Semua",mgrStaffFilter:"",lapFilterStaff:"",programs:[],laporan:[],mgrProgs:[],sharedProgs:[],mgrView:"divisi",mgrDivisi:null,mgrStaff:null,mAction:null,mPid:null,lpPid:null,exportOpt:"periode",budgetRows:[],deletePid:null,revisiId:null,editData:null,shareProgId:null};
 
 function esc(t){return String(t||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
@@ -647,24 +647,30 @@ function doLogin(){
   sessionStorage.setItem("assyifa_login", JSON.stringify({nama:user.nama, pin:user.pin, role:user.role, divisi:user.divisi}));
   document.getElementById("login-screen").classList.remove("on");
   document.getElementById("login-pin").value="";
-  initAppUI();listenAll();loadPinsOnBoot();
+  initAppUI();
+  await loadPinsOnBoot();
   document.getElementById("app").style.display="flex";
   document.getElementById("fab").style.display="flex";
+  listenAll();
 }
 function doLogout(){
-  if(unsubP){unsubP();unsubP=null;}if(unsubL){unsubL();unsubL=null;}if(unsubMP){unsubMP();unsubMP=null;}if(unsubSP){unsubSP();unsubSP=null;}
+  realtimeChannels.forEach(ch=>{try{if(sb)sb.removeChannel(ch);}catch(e){}});
+  realtimeChannels=[];
   sessionStorage.removeItem("assyifa_login");
-  S.user=null;S.programs=[];S.laporan=[];S.tab="input";S.pekan=0;S.mgrView="divisi";S.mgrDivisi=null;S.mgrStaff=null;
+  S.user=null;S.programs=[];S.laporan=[];S.mgrProgs=[];S.sharedProgs=[];
+  S.tab="input";S.mgrTab="myprog";S.pekan=0;S.search="";S.fStat="Semua";
+  S.mgrView="divisi";S.mgrDivisi=null;S.mgrStaff=null;
   document.getElementById("app").style.display="none";
   document.getElementById("fab").style.display="none";
   document.getElementById("login-nama").value="";
+  document.getElementById("login-pin").value="";
   document.getElementById("login-err").style.display="none";
   document.getElementById("login-screen").classList.add("on");
 }
 
 function initAppUI(){
   const u=S.user;
-  const sb=document.getElementById("sel-bulan");sb.innerHTML=MONTHS.map((m,i)=>`<option value="${i}"${S.bulan===i?" selected":""}>${m}</option>`).join("");
+  const selBulan=document.getElementById("sel-bulan");selBulan.innerHTML=MONTHS.map((m,i)=>`<option value="${i}"${S.bulan===i?" selected":""}>${m}</option>`).join("");
   const sy=document.getElementById("sel-tahun");const yr=new Date().getFullYear();sy.innerHTML=[yr-1,yr,yr+1,yr+2].map(y=>`<option value="${y}"${S.tahun===y?" selected":""}>${y}</option>`).join("");
   renderWeekPills();
   document.getElementById("tab-nav-staff").style.display=(u.role==="staff"||u.role==="manajer_op")?"flex":"none";
@@ -680,7 +686,7 @@ function renderWeekPills(){
   const wp=document.getElementById("week-pills");
   wp.innerHTML=["Semua","Pekan 1","Pekan 2","Pekan 3","Pekan 4"].map((w,i)=>`<button class="wpill${S.pekan===i?" on":""}" onclick="setPekan(${i})">${w}</button>`).join("");
 }
-function changePeriod(){S.bulan=parseInt(document.getElementById("sel-bulan").value);S.tahun=parseInt(document.getElementById("sel-tahun").value);S.pekan=0;document.getElementById("tb-period").textContent=MONTHS[S.bulan]+" "+S.tahun;renderWeekPills();listenAll();}
+function changePeriod(){S.bulan=parseInt(document.getElementById("sel-bulan").value);S.tahun=parseInt(document.getElementById("sel-tahun").value);S.pekan=0;document.getElementById("tb-period").textContent=MONTHS[S.bulan]+" "+S.tahun;renderWeekPills();listenAll();loadAllData();}
 function setPekan(n){S.pekan=n;renderWeekPills();render();}
 function setTab(t){S.tab=t;["input","list","laporan","rekap"].forEach(id=>{const el=document.getElementById("tab-"+id);if(el)el.className="tab-btn"+(t===id?" on":"");});render();}
 function setMgrTab(t){S.mgrTab=t;["myprog","ajuan","kirim","rekap","laporan"].forEach(id=>{const el=document.getElementById("mgrtab-"+id);if(el)el.className="tab-btn"+(t===id?" on":"");});render();}
