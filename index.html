@@ -549,7 +549,7 @@ const DIVISI=["Marketing","Operasional","Keuangan"];
 const DICO={Marketing:"📣",Operasional:"⚙️",Keuangan:"💰"};
 const DCLASS={Marketing:"m",Operasional:"o",Keuangan:"k"};
 const STAFF_BY_DIV={Marketing:ACCOUNTS.filter(a=>a.role==="staff"&&a.divisi==="Marketing"),Operasional:ACCOUNTS.filter(a=>(a.role==="staff"||a.role==="manajer_op")&&a.divisi==="Operasional"),Keuangan:ACCOUNTS.filter(a=>a.role==="staff"&&a.divisi==="Keuangan")};
-let supabase=null, realtimeChannels=[];
+let sb=null, realtimeChannels=[];
 let S={user:null,bulan:new Date().getMonth(),tahun:new Date().getFullYear(),pekan:0,tab:"input",mgrTab:"myprog",search:"",fStat:"Semua",mgrStaffFilter:"",lapFilterStaff:"",programs:[],laporan:[],mgrProgs:[],sharedProgs:[],mgrView:"divisi",mgrDivisi:null,mgrStaff:null,mAction:null,mPid:null,lpPid:null,exportOpt:"periode",budgetRows:[],deletePid:null,revisiId:null,editData:null,shareProgId:null};
 
 function esc(t){return String(t||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
@@ -565,7 +565,7 @@ function filterByPekan(progs){if(S.pekan===0)return progs;return progs.filter(p=
 
 async function initFirebase(){
   try{
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     setSyncStatus("online");
   }catch(e){setSyncStatus("offline");toast("⚠️ Gagal konek Supabase!","err");}
   hideLoading();
@@ -597,36 +597,36 @@ function progCol(){return`programs_${S.tahun}_${S.bulan+1}`;}
 function lapCol(){return`laporan_${S.tahun}_${S.bulan+1}`;}
 let unsubMP=null, unsubSP=null;
 function listenAll(){
-  realtimeChannels.forEach(ch=>{try{supabase.removeChannel(ch);}catch(e){}});
+  realtimeChannels.forEach(ch=>{try{sb.removeChannel(ch);}catch(e){}});
   realtimeChannels=[];
-  if(!supabase)return;
+  if(!sb)return;
   loadAllData();
-  const ch1=supabase.channel('prog-ch').on('postgres_changes',{event:'*',schema:'public',table:PROG_TABLE},()=>loadPrograms()).subscribe();
-  const ch2=supabase.channel('lap-ch').on('postgres_changes',{event:'*',schema:'public',table:LAP_TABLE},()=>loadLaporan()).subscribe();
+  const ch1=sb.channel('prog-ch').on('postgres_changes',{event:'*',schema:'public',table:PROG_TABLE},()=>loadPrograms()).subscribe();
+  const ch2=sb.channel('lap-ch').on('postgres_changes',{event:'*',schema:'public',table:LAP_TABLE},()=>loadLaporan()).subscribe();
   realtimeChannels=[ch1,ch2];
   if(S.user&&S.user.role==="direktur"){
-    const ch3=supabase.channel('mgr-ch').on('postgres_changes',{event:'*',schema:'public',table:MGR_PROG_TABLE},()=>loadMgrProgs()).subscribe();
-    const ch4=supabase.channel('shared-ch').on('postgres_changes',{event:'*',schema:'public',table:SHARED_TABLE},()=>loadSharedProgs()).subscribe();
+    const ch3=sb.channel('mgr-ch').on('postgres_changes',{event:'*',schema:'public',table:MGR_PROG_TABLE},()=>loadMgrProgs()).subscribe();
+    const ch4=sb.channel('shared-ch').on('postgres_changes',{event:'*',schema:'public',table:SHARED_TABLE},()=>loadSharedProgs()).subscribe();
     realtimeChannels.push(ch3,ch4);
   }
 }
 async function loadAllData(){await Promise.all([loadPrograms(),loadLaporan()]);if(S.user&&S.user.role==="direktur"){await Promise.all([loadMgrProgs(),loadSharedProgs()]);}}
-async function loadPrograms(){if(!supabase)return;const{data,error}=await supabase.from(PROG_TABLE).select('*').eq('bulan',S.bulan+1).eq('tahun',S.tahun).order('createdAt',{ascending:false});if(error){console.error(error);return;}S.programs=data||[];render();}
-async function loadLaporan(){if(!supabase)return;const{data,error}=await supabase.from(LAP_TABLE).select('*').eq('bulan',S.bulan+1).eq('tahun',S.tahun).order('createdAt',{ascending:false});if(error){console.error(error);return;}S.laporan=data||[];render();}
-async function loadMgrProgs(){if(!supabase||!S.user)return;const{data,error}=await supabase.from(MGR_PROG_TABLE).select('*').eq('ownerNama',S.user.nama).eq('bulan',S.bulan+1).eq('tahun',S.tahun).order('createdAt',{ascending:false});if(error)return;S.mgrProgs=data||[];render();}
-async function loadSharedProgs(){if(!supabase||!S.user)return;const{data,error}=await supabase.from(SHARED_TABLE).select('*').eq('toNama',S.user.nama).order('createdAt',{ascending:false});if(error)return;S.sharedProgs=data||[];render();}
+async function loadPrograms(){if(!sb)return;const{data,error}=await sb.from(PROG_TABLE).select('*').eq('bulan',S.bulan+1).eq('tahun',S.tahun).order('createdAt',{ascending:false});if(error){console.error(error);return;}S.programs=data||[];render();}
+async function loadLaporan(){if(!sb)return;const{data,error}=await sb.from(LAP_TABLE).select('*').eq('bulan',S.bulan+1).eq('tahun',S.tahun).order('createdAt',{ascending:false});if(error){console.error(error);return;}S.laporan=data||[];render();}
+async function loadMgrProgs(){if(!sb||!S.user)return;const{data,error}=await sb.from(MGR_PROG_TABLE).select('*').eq('ownerNama',S.user.nama).eq('bulan',S.bulan+1).eq('tahun',S.tahun).order('createdAt',{ascending:false});if(error)return;S.mgrProgs=data||[];render();}
+async function loadSharedProgs(){if(!sb||!S.user)return;const{data,error}=await sb.from(SHARED_TABLE).select('*').eq('toNama',S.user.nama).order('createdAt',{ascending:false});if(error)return;S.sharedProgs=data||[];render();}
 
 async function addFs(col,data){
-  if(!supabase){toast("Tidak terhubung","err");return null;}
+  if(!sb){toast("Tidak terhubung","err");return null;}
   setSyncStatus("syncing");
   try{
-    const{data:res,error}=await supabase.from(col).insert([{...data}]).select();
+    const{data:res,error}=await sb.from(col).insert([{...data}]).select();
     if(error)throw error;
     setSyncStatus("online");
     return res&&res[0]?res[0].id:true;
   }catch(e){toast("Gagal: "+e.message,"err");setSyncStatus("offline");return null;}
 }
-async function updateFs(col,id,data){if(!supabase){toast("Tidak terhubung","err");return false;}setSyncStatus("syncing");try{const{error}=await supabase.from(col).update({...data}).eq("id",id);if(error)throw error;setSyncStatus("online");return true;}catch(e){toast("Gagal: "+e.message,"err");setSyncStatus("offline");return false;}}
+async function updateFs(col,id,data){if(!sb){toast("Tidak terhubung","err");return false;}setSyncStatus("syncing");try{const{error}=await sb.from(col).update({...data}).eq("id",id);if(error)throw error;setSyncStatus("online");return true;}catch(e){toast("Gagal: "+e.message,"err");setSyncStatus("offline");return false;}}
 
 function showLogin(){const sel=document.getElementById("login-nama");sel.innerHTML=`<option value="">-- Pilih Nama --</option>`;ACCOUNTS.forEach((u,i)=>sel.innerHTML+=`<option value="${i}">${u.nama} (${u.role==="direktur"?"Manajer":"Staff"} ${u.divisi})</option>`);document.getElementById("login-screen").classList.add("on");}
 function togglePin(){const inp=document.getElementById("login-pin");inp.type=inp.type==="password"?"text":"password";}
@@ -1498,7 +1498,7 @@ async function savePin(idx){
   if(!db){toast("Tidak terhubung","err");return;}
   setSyncStatus("syncing");
   try{
-    const{data:ex}=await supabase.from(SYSTEM_TABLE).select("*").eq("id","pins").single();const curPins=ex?ex.data:{};curPins[user.nama]=newPin;await supabase.from(SYSTEM_TABLE).upsert([{id:"pins",data:curPins}]);
+    const{data:ex}=await sb.from(SYSTEM_TABLE).select("*").eq("id","pins").single();const curPins=ex?ex.data:{};curPins[user.nama]=newPin;await sb.from(SYSTEM_TABLE).upsert([{id:"pins",data:curPins}]);
     if(realIdx>=0)ACCOUNTS[realIdx].pin=newPin;
     setSyncStatus("online");
     if(inp)inp.value="";
@@ -1506,9 +1506,9 @@ async function savePin(idx){
   }catch(e){toast("Gagal simpan PIN: "+e.message,"err");setSyncStatus("offline");}
 }
 async function loadPinsOnBoot(){
-  if(!supabase)return;
+  if(!sb)return;
   try{
-    const{data:pd}=await supabase.from(SYSTEM_TABLE).select("*").eq("id","pins").single();if(pd&&pd.data){const pins=pd.data;ACCOUNTS.forEach((u,i)=>{if(pins[u.nama])ACCOUNTS[i].pin=pins[u.nama];});}
+    const{data:pd}=await sb.from(SYSTEM_TABLE).select("*").eq("id","pins").single();if(pd&&pd.data){const pins=pd.data;ACCOUNTS.forEach((u,i)=>{if(pins[u.nama])ACCOUNTS[i].pin=pins[u.nama];});}
   }catch(e){}
 }
 
@@ -1523,8 +1523,8 @@ async function confirmDelete(){
   if(!S.deletePid)return;
   const btn=document.querySelector("#modal-delete .bno");if(btn)btn.disabled=true;
   try{
-    await supabase.from(PROG_TABLE).delete().eq("id",S.deletePid);
-    await supabase.from(LAP_TABLE).delete().eq("programId",S.deletePid);
+    await sb.from(PROG_TABLE).delete().eq("id",S.deletePid);
+    await sb.from(LAP_TABLE).delete().eq("programId",S.deletePid);
     closeModal("modal-delete");toast("✅ Program berhasil dihapus!","ok");S.deletePid=null;await loadAllData();
   }catch(e){toast("Gagal hapus: "+e.message,"err");}
   if(btn)btn.disabled=false;
@@ -1827,7 +1827,7 @@ async function confirmShare(){
   if(!db){toast("Tidak terhubung","err");return;}
   setSyncStatus("syncing");
   try{
-    await supabase.from(SHARED_TABLE).insert([{namaProgram:prog.namaProgram,tujuan:prog.tujuan,target:prog.target,budgetTotal:prog.budgetTotal||0,fromNama:S.user.nama,toNama,shareNote:note,sentAt:new Date().toISOString()}]);
+    await sb.from(SHARED_TABLE).insert([{namaProgram:prog.namaProgram,tujuan:prog.tujuan,target:prog.target,budgetTotal:prog.budgetTotal||0,fromNama:S.user.nama,toNama,shareNote:note,sentAt:new Date().toISOString()}]);
     setSyncStatus("online");
     closeModal("modal-share");
     toast("✅ Program berhasil dikirim ke "+toNama+"!","ok");
