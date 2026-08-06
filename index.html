@@ -601,7 +601,6 @@ function hideLoading(){const el=document.getElementById("loading-screen");el.cla
 function setSyncStatus(s){const dot=document.getElementById("sync-dot"),lbl=document.getElementById("sync-lbl");if(!dot)return;dot.className="sync-dot"+(s==="offline"?" offline":s==="syncing"?" syncing":"");lbl.textContent=s==="online"?"Real-time":s==="syncing"?"Menyimpan...":"Offline";}
 function progCol(){return`programs_${S.tahun}_${S.bulan+1}`;}
 function lapCol(){return`laporan_${S.tahun}_${S.bulan+1}`;}
-let unsubMP=null, unsubSP=null;
 function listenAll(){
   realtimeChannels.forEach(ch=>{try{sb.removeChannel(ch);}catch(e){}});
   realtimeChannels=[];
