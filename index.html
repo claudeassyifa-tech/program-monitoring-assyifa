@@ -324,7 +324,25 @@ textarea.inp{resize:vertical;min-height:72px}
 .laporan-item-wrap{position:relative}
 .lap-checkbox-wrap{position:absolute;top:14px;left:-28px}
 .laporan-list-wrap{padding-left:30px;position:relative}
+
+/* TINJAUAN BUDGET */
+.budget-tab-pills{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.budget-tab-pill{padding:8px 18px;border-radius:20px;border:1.5px solid var(--border2);background:var(--white);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;font-family:inherit}
+.budget-tab-pill.on{background:var(--g1);color:#fff;border-color:var(--g1)}
+.budget-review-card{background:var(--white);border-radius:var(--r2);border:1.5px solid #9fe1cb;padding:16px 18px;margin-bottom:10px;box-shadow:var(--sh)}
+.budget-review-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.budget-amount{background:var(--g5);border-radius:var(--r);padding:8px 14px;font-size:14px;font-weight:700;color:var(--g1);text-align:center;min-width:120px}
+
 @media print{.print-select-bar,.lap-checkbox-wrap,.btn-print-sel{display:none!important}.laporan-list-wrap{padding-left:0}.prog-card.print-hidden,.laporan-card.print-hidden{display:none!important}}
+
+
+/* TINJAUAN BUDGET */
+.budget-tab-pills{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.budget-tab-pill{padding:8px 18px;border-radius:20px;border:1.5px solid var(--border2);background:var(--white);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;font-family:inherit}
+.budget-tab-pill.on{background:var(--g1);color:#fff;border-color:var(--g1)}
+.budget-review-card{background:var(--white);border-radius:var(--r2);border:1.5px solid #9fe1cb;padding:16px 18px;margin-bottom:10px;box-shadow:var(--sh)}
+.budget-review-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.budget-amount{background:var(--g5);border-radius:var(--r);padding:8px 14px;font-size:14px;font-weight:700;color:var(--g1);text-align:center;min-width:120px}
 
 @media print{.topbar,.info-bar,.period-bar,.tab-nav,.fab,.act-row,.filter-row,.form-foot,.logout-btn,.export-btn,.pil-right,.mgr-back-btn{display:none!important}body{background:#fff}.prog-card,.laporan-card{break-inside:avoid}}
 @media(max-width:680px){.form-grid{grid-template-columns:1fr}.fg.full{grid-column:1}.stats-grid{grid-template-columns:1fr 1fr}.prog-detail,.lp-detail,.view-lp-grid{grid-template-columns:1fr}.content{padding:14px}.mgr-nav-grid{grid-template-columns:1fr}.staff-grid{grid-template-columns:1fr 1fr}.topbar{padding:0 12px}.export-opts{grid-template-columns:1fr}}
@@ -381,6 +399,7 @@ textarea.inp{resize:vertical;min-height:72px}
     <button class="tab-btn on" id="mgrtab-myprog" onclick="setMgrTab('myprog')">✏️ Program Saya</button>
     <button class="tab-btn" id="mgrtab-ajuan" onclick="setMgrTab('ajuan')">📋 Ajuan Staff <span class="tbadge tbadge-amber" id="cnt-ajuan">0</span></button>
     <button class="tab-btn" id="mgrtab-kirim" onclick="setMgrTab('kirim')">📤 Kirim ke Manajer</button>
+    <button class="tab-btn" id="mgrtab-budget" onclick="setMgrTab('budget')" id="mgrtab-budget" style="display:none">💰 Tinjauan Budget <span class="tbadge tbadge-green" id="cnt-budget">0</span></button>
     <button class="tab-btn" id="mgrtab-rekap" onclick="setMgrTab('rekap')">📊 Rekap Disetujui</button>
     <button class="tab-btn" id="mgrtab-laporan" onclick="setMgrTab('laporan')">📝 Laporan Staff <span class="tbadge tbadge-purple" id="cnt-mgr-laporan">0</span></button>
   </div>
@@ -557,7 +576,7 @@ const DICO={Marketing:"📣",Operasional:"⚙️",Keuangan:"💰"};
 const DCLASS={Marketing:"m",Operasional:"o",Keuangan:"k"};
 const STAFF_BY_DIV={Marketing:ACCOUNTS.filter(a=>a.role==="staff"&&a.divisi==="Marketing"),Operasional:ACCOUNTS.filter(a=>(a.role==="staff"||a.role==="manajer_op")&&a.divisi==="Operasional"),Keuangan:ACCOUNTS.filter(a=>a.role==="staff"&&a.divisi==="Keuangan")};
 let db=null, unsubP=null, unsubL=null, unsubMP=null, unsubSP=null, realtimeChannels=[];
-let S={user:null,bulan:new Date().getMonth(),tahun:new Date().getFullYear(),pekan:0,tab:"input",mgrTab:"myprog",search:"",fStat:"Semua",mgrStaffFilter:"",lapFilterStaff:"",programs:[],laporan:[],mgrProgs:[],sharedProgs:[],mgrView:"divisi",mgrDivisi:null,mgrStaff:null,mAction:null,mPid:null,lpPid:null,exportOpt:"periode",budgetRows:[],deletePid:null,revisiId:null,editData:null,shareProgId:null};
+let S={user:null,bulan:new Date().getMonth(),tahun:new Date().getFullYear(),pekan:0,tab:"input",mgrTab:"myprog",search:"",fStat:"Semua",mgrStaffFilter:"",lapFilterStaff:"",tinjauDiv:"Marketing",programs:[],laporan:[],mgrProgs:[],sharedProgs:[],mgrView:"divisi",mgrDivisi:null,mgrStaff:null,mAction:null,mPid:null,lpPid:null,exportOpt:"periode",budgetRows:[],deletePid:null,revisiId:null,editData:null,shareProgId:null};
 
 function esc(t){return String(t||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 function fd(d){if(!d)return"—";const p=d.split("-");return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:d;}
@@ -698,7 +717,7 @@ function renderWeekPills(){
 function changePeriod(){S.bulan=parseInt(document.getElementById("sel-bulan").value);S.tahun=parseInt(document.getElementById("sel-tahun").value);S.pekan=0;document.getElementById("tb-period").textContent=MONTHS[S.bulan]+" "+S.tahun;renderWeekPills();listenAll();}
 function setPekan(n){S.pekan=n;renderWeekPills();render();}
 function setTab(t){S.tab=t;["input","list","laporan","rekap"].forEach(id=>{const el=document.getElementById("tab-"+id);if(el)el.className="tab-btn"+(t===id?" on":"");});render();}
-function setMgrTab(t){S.mgrTab=t;["myprog","ajuan","kirim","rekap","laporan"].forEach(id=>{const el=document.getElementById("mgrtab-"+id);if(el)el.className="tab-btn"+(t===id?" on":"");});render();}
+function setMgrTab(t){S.mgrTab=t;["myprog","ajuan","kirim","budget","rekap","laporan"].forEach(id=>{const el=document.getElementById("mgrtab-"+id);if(el&&el.style.display!=="none")el.className="tab-btn"+(t===id?" on":"");});render();}
 
 function render(){
   const area=document.getElementById("app-content");if(!area||!S.user)return;
@@ -726,6 +745,7 @@ function render(){
     if(S.mgrTab==="myprog")renderMgrMyProg(area);
     else if(S.mgrTab==="ajuan")renderMgrAjuan(area);
     else if(S.mgrTab==="kirim")renderMgrKirim(area);
+    else if(S.mgrTab==="budget")renderTinjauanBudget(area);
     else if(S.mgrTab==="rekap")renderRekap(area);
     else renderMgrLaporan(area);
   }
@@ -1960,6 +1980,75 @@ function renderStokTable(){
 function onKategoriChange(val){
   const stokSection=document.getElementById("op-stok-section");
   if(stokSection) stokSection.style.display=val==="Stok & Perlengkapan Jamaah"?"block":"none";
+}
+
+
+// ═══ TINJAUAN BUDGET (Direktur Keuangan) ═══
+function renderTinjauanBudget(area){
+  const u=S.user;
+  if(!S.tinjauDiv)S.tinjauDiv="Marketing";
+  const allApproved=filterByPekan(S.programs.filter(p=>p.status==="Disetujui"&&Number(p.budgetTotal||0)>0));
+  const mktProgs=allApproved.filter(p=>p.divisi==="Marketing");
+  const opProgs=allApproved.filter(p=>p.divisi==="Operasional");
+  const curProgs=S.tinjauDiv==="Marketing"?mktProgs:opProgs;
+  const totalBudget=curProgs.reduce((s,p)=>s+Number(p.budgetTotal||0),0);
+  let html=`<div class="dbanner" style="background:linear-gradient(135deg,var(--gold-d),var(--gold));color:#fff">💰 <strong>Tinjauan Budget</strong> — Direktur Keuangan · ${MONTHS[S.bulan]} ${S.tahun}</div>
+  <div class="budget-tab-pills">
+    <button class="budget-tab-pill${S.tinjauDiv==="Marketing"?" on":""}" onclick="setTinjauDiv('Marketing')">📣 Marketing <span style="background:rgba(0,0,0,.15);border-radius:10px;padding:2px 8px;font-size:11px;margin-left:4px">${mktProgs.length}</span></button>
+    <button class="budget-tab-pill${S.tinjauDiv==="Operasional"?" on":""}" onclick="setTinjauDiv('Operasional')">⚙️ Operasional <span style="background:rgba(0,0,0,.15);border-radius:10px;padding:2px 8px;font-size:11px;margin-left:4px">${opProgs.length}</span></button>
+  </div>
+  <div class="stats-grid" style="margin-bottom:16px">
+    <div class="stat-box sg"><div class="sn">${curProgs.length}</div><div class="sl">✅ Program Disetujui</div></div>
+    <div class="stat-box sgold"><div class="sn" style="font-size:13px">${rp(totalBudget)}</div><div class="sl">💰 Total Budget</div></div>
+    <div class="stat-box sg"><div class="sn">${curProgs.filter(p=>S.laporan.find(l=>l.programId===p.id)).length}</div><div class="sl">📝 Sudah Dilaporkan</div></div>
+  </div>
+  <div class="print-select-bar">
+    <span style="font-weight:600;color:var(--g2)">🖨️ Pilih untuk Dicetak:</span>
+    <label><input type="checkbox" class="print-checkbox" id="chk-budget-all" onchange="toggleAllBudgetPrint(this.checked)"/> Pilih Semua</label>
+    <button class="btn-print-sel" onclick="printSelectedBudget()">🖨️ Cetak yang Dipilih</button>
+  </div>`;
+  if(!curProgs.length){html+=`<div class="empty"><div class="empty-icon">💰</div><div class="empty-title">Belum ada program disetujui dengan budget di divisi ${S.tinjauDiv}</div></div>`;area.innerHTML=html;return;}
+  const staffNames=[...new Set(curProgs.map(p=>p.nama))];
+  html+=`<div id="budget-list-wrap" style="padding-left:30px;position:relative">`;
+  staffNames.forEach(nama=>{
+    const sp=curProgs.filter(p=>p.nama===nama);
+    const sb2=sp.reduce((s,p)=>s+Number(p.budgetTotal||0),0);
+    html+=`<div style="font-size:13px;font-weight:600;color:var(--g1);margin:14px 0 8px">👤 ${nama} <span style="font-size:11px;font-weight:400;color:var(--txt3)">${sp.length} program · ${rp(sb2)}</span></div>`;
+    sp.forEach(p=>{
+      const lap=S.laporan.find(l=>l.programId===p.id);
+      const budget=Number(p.budgetTotal||0);
+      const tgl=p.tanggalRencana?p.tanggalRencana.split("-").reverse().join("/"):"—";
+      let budgetView="";
+      if(p.budgetRincian&&p.budgetRincian.length>0){budgetView=`<div class="budget-detail-view"><div class="bdv-title">📋 Rincian Budget</div>${p.budgetRincian.map(r=>`<div class="bdv-row"><span>${esc(r.ket||"—")} × ${r.qty}</span><span>${rp(r.total||0)}</span></div>`).join("")}<div class="bdv-row"><span>TOTAL</span><span>${rp(budget)}</span></div></div>`;}
+      html+=`<div class="budget-item-wrap" id="bw-${p.id}">
+        <div class="lap-checkbox-wrap"><input type="checkbox" class="print-checkbox budget-chk" data-id="${p.id}" onchange="updateBudgetAllChk()"/></div>
+        <div class="budget-review-card">
+          <div class="budget-review-header"><div><div class="pc-name">${esc(p.namaProgram)}</div><div class="pc-by">👤 ${esc(p.nama)} · 📅 ${tgl}</div></div><div class="budget-amount">${rp(budget)}</div></div>
+          <div class="prog-detail"><div class="pd"><div class="pd-key">Tujuan</div><div class="pd-val">${esc(p.tujuan)}</div></div><div class="pd"><div class="pd-key">Target</div><div class="pd-val">${esc(p.target)}</div></div></div>
+          ${budgetView}
+          ${lap?`<div class="view-lp" style="margin-top:10px"><div class="view-lp-title">📝 Realisasi Budget</div><div class="view-lp-grid">
+            <div class="view-lp-item"><div class="view-lp-key">Budget Rencana</div><div class="view-lp-val">${rp(budget)}</div></div>
+            <div class="view-lp-item"><div class="view-lp-key">Realisasi</div><div class="view-lp-val">${rp(lap.realisasiBudget||0)}</div></div>
+            <div class="view-lp-item"><div class="view-lp-key">Selisih</div><div class="view-lp-val" style="color:${budget-Number(lap.realisasiBudget||0)>=0?"var(--g2)":"var(--red)"}">${rp(Math.abs(budget-Number(lap.realisasiBudget||0)))} (${budget-Number(lap.realisasiBudget||0)>=0?"Hemat":"Over"})</div></div>
+          </div></div>`:"<div style='font-size:12px;color:var(--txt3);margin-top:8px;padding:8px;background:var(--amber-l);border-radius:6px'>⏳ Belum ada laporan realisasi</div>"}
+        </div></div>`;
+    });
+  });
+  html+=`</div>`;
+  area.innerHTML=html;
+}
+function setTinjauDiv(div){S.tinjauDiv=div;render();}
+function toggleAllBudgetPrint(checked){document.querySelectorAll('.budget-chk').forEach(c=>c.checked=checked);}
+function updateBudgetAllChk(){const all=document.querySelectorAll('.budget-chk');const allChecked=[...all].every(c=>c.checked);const chk=document.getElementById('chk-budget-all');if(chk)chk.checked=allChecked;}
+function printSelectedBudget(){
+  const checked=[...document.querySelectorAll('.budget-chk:checked')].map(c=>c.dataset.id);
+  if(!checked.length){toast("⚠️ Pilih minimal 1 program dulu","warn");return;}
+  document.querySelectorAll('.budget-item-wrap').forEach(wrap=>{
+    const id=wrap.id.replace('bw-','');
+    wrap.querySelectorAll('.budget-review-card').forEach(el=>el.classList.toggle('print-hidden',!checked.includes(id)));
+  });
+  setTimeout(()=>window.print(),100);
+  setTimeout(()=>document.querySelectorAll('.print-hidden').forEach(el=>el.classList.remove('print-hidden')),2000);
 }
 
 window.addEventListener("load",()=>setTimeout(initFirebase,600));
