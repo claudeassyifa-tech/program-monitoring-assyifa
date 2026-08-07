@@ -600,6 +600,15 @@ async function initFirebase(){
   showLogin();
 }
 function hideLoading(){const el=document.getElementById("loading-screen");el.classList.add("hide");setTimeout(()=>el.style.display="none",400);}
+function showLogin(){
+  const sel=document.getElementById("login-nama");
+  sel.innerHTML=`<option value="">-- Pilih Nama --</option>`;
+  ACCOUNTS.forEach((u,i)=>{
+    if(u.role==="admin")return;
+    sel.innerHTML+=`<option value="${i}">${u.nama} (${u.role==="direktur"?"Direktur":u.role==="manajer_op"?"Manajer":"Staff"} ${u.divisi})</option>`;
+  });
+  document.getElementById("login-screen").classList.add("on");
+}
 function setSyncStatus(s){const dot=document.getElementById("sync-dot"),lbl=document.getElementById("sync-lbl");if(!dot)return;dot.className="sync-dot"+(s==="offline"?" offline":s==="syncing"?" syncing":"");lbl.textContent=s==="online"?"Real-time":s==="syncing"?"Menyimpan...":"Offline";}
 function progCol(){return`programs_${S.tahun}_${S.bulan+1}`;}
 function lapCol(){return`laporan_${S.tahun}_${S.bulan+1}`;}
