@@ -569,7 +569,7 @@ function getWeekRange(b,y,pk){const starts=[1,8,15,22];const daysInMonth=new Dat
 function getWeekOfDate(ds,b,y){if(!ds)return 0;const d=new Date(ds);if(d.getMonth()!==b||d.getFullYear()!==y)return 0;const day=d.getDate();if(day<=7)return 1;if(day<=14)return 2;if(day<=21)return 3;return 4;}
 function filterByPekan(progs){if(S.pekan===0)return progs;return progs.filter(p=>getWeekOfDate(p.tanggalRencana,S.bulan,S.tahun)===S.pekan);}
 
-async async function initFirebase(){
+async function initFirebase(){
   try{
     sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     setSyncStatus("online");
@@ -615,7 +615,7 @@ function listenAll(){
     realtimeChannels.push(ch3,ch4);
   }
 }
-async async function loadAllData(){await Promise.all([loadPrograms(),loadLaporan()]);if(S.user&&S.user.role==="direktur"){await Promise.all([loadMgrProgs(),loadSharedProgs()]);}}
+async function loadAllData(){await Promise.all([loadPrograms(),loadLaporan()]);if(S.user&&S.user.role==="direktur"){await Promise.all([loadMgrProgs(),loadSharedProgs()]);}}
 async function loadPrograms(){if(!sb)return;const{data,error}=await sb.from(PROG_TABLE).select('*').eq('bulan',S.bulan+1).eq('tahun',S.tahun).order('createdAt',{ascending:false});if(error){console.error(error);return;}S.programs=data||[];render();}
 async function loadLaporan(){if(!sb)return;const{data,error}=await sb.from(LAP_TABLE).select('*').eq('bulan',S.bulan+1).eq('tahun',S.tahun).order('createdAt',{ascending:false});if(error){console.error(error);return;}S.laporan=data||[];render();}
 async function loadMgrProgs(){if(!sb||!S.user)return;const{data,error}=await sb.from(MGR_PROG_TABLE).select('*').eq('ownerNama',S.user.nama).eq('bulan',S.bulan+1).eq('tahun',S.tahun).order('createdAt',{ascending:false});if(error)return;S.mgrProgs=data||[];render();}
