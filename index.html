@@ -605,7 +605,7 @@ function showLogin(){
   sel.innerHTML=`<option value="">-- Pilih Nama --</option>`;
   ACCOUNTS.forEach((u,i)=>{
     if(u.role==="admin")return;
-    sel.innerHTML+=`<option value="${i}">${u.nama} (${u.role==="direktur"?"Direktur":u.role==="manajer_op"?"Manajer":"Staff"} ${u.divisi})</option>`;
+    sel.innerHTML+=`<option value="${i}">${u.nama} (${u.role==="direktur"?"Direktur":u.role==="manajer_op"?"Manajer Operasional":"Staff"} ${u.divisi})</option>`;
   });
   document.getElementById("login-screen").classList.add("on");
 }
@@ -1437,7 +1437,10 @@ function renderRekap(area){
   const approved=filterByPekan(S.programs.filter(p=>p.status==="Disetujui"));
   const pekanLabel=S.pekan>0?` · Pekan ${S.pekan}`:"";
   const totalBudget=approved.reduce((s,p)=>s+Number(p.budgetTotal||p.budget||0),0);
-  let list=(u.role==="staff"||u.role==="manajer_op")?approved.filter(p=>p.divisi===u.divisi&&p.nama===u.nama):approved.filter(p=>p.divisi===u.divisi);
+  let list;
+  if(u.role==="staff") list=approved.filter(p=>p.divisi===u.divisi&&p.nama===u.nama);
+  else if(u.role==="manajer_op") list=approved.filter(p=>p.nama===u.nama);
+  else list=approved.filter(p=>p.divisi===u.divisi);
   let html=`<div class="rekap-header">
     <div class="rekap-title">📊 Rekap Program Disetujui</div>
     <div class="rekap-sub">${MONTHS[S.bulan]} ${S.tahun}${pekanLabel}</div>
@@ -1685,7 +1688,11 @@ function mgrProgCardHTML(p){
 // ═══ MANAGER: AJUAN STAFF ═══
 function renderMgrAjuan(area){
   const u=S.user;
-  const ajuanProgs=filterByPekan(S.programs.filter(p=>p.divisi===u.divisi&&p.nama!==u.nama));
+  const ajuanProgs=filterByPekan(S.programs.filter(p=>{
+    // Direktur Operasional sees all Operasional staff + Azhar (manajer_op)
+    if(u.divisi==="Operasional") return p.divisi==="Operasional";
+    return p.divisi===u.divisi;
+  }));
   const m=ajuanProgs.filter(p=>p.status==="Menunggu").length;
   const a=ajuanProgs.filter(p=>p.status==="Disetujui").length;
   const r=ajuanProgs.filter(p=>p.status==="Ditolak").length;
@@ -1759,7 +1766,8 @@ function renderMgrKirim(area){
 function renderMgrLaporan(area){
   const u=S.user;
   const staffLaps=S.laporan.filter(l=>{
-    if(u.divisi==="Keuangan") return l.divisi===u.divisi||l.divisi==="Operasional";
+    // Fithri (Keuangan) sees Keuangan laporan + Azhar (Operasional manajer_op)
+    if(u.divisi==="Keuangan") return l.divisi===u.divisi||(l.divisi==="Operasional"&&l.pelapor==="Azhar Dzaky Muhammad");
     return l.divisi===u.divisi;
   });
 
@@ -1892,7 +1900,7 @@ async function submitEval(){
 // ═══ USER TYPE HELPERS ═══
 function isNabila(){return S.user&&S.user.bagian==="Media";}
 function isMarketingOffline(){return S.user&&S.user.divisi==="Marketing"&&!isNabila();}
-function isOperasional(){return S.user&&S.user.divisi==="Operasional"&&S.user.role==="staff";}
+function isOperasional(){return S.user&&S.user.divisi==="Operasional"&&(S.user.role==="staff"||S.user.role==="manajer_op");}
 function isKeuangan(){return S.user&&S.user.divisi==="Keuangan";}
 
 // ═══ TARGET AREA ROWS (Marketing Offline) ═══
