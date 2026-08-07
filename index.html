@@ -556,7 +556,7 @@ const DIVISI=["Marketing","Operasional","Keuangan"];
 const DICO={Marketing:"📣",Operasional:"⚙️",Keuangan:"💰"};
 const DCLASS={Marketing:"m",Operasional:"o",Keuangan:"k"};
 const STAFF_BY_DIV={Marketing:ACCOUNTS.filter(a=>a.role==="staff"&&a.divisi==="Marketing"),Operasional:ACCOUNTS.filter(a=>(a.role==="staff"||a.role==="manajer_op")&&a.divisi==="Operasional"),Keuangan:ACCOUNTS.filter(a=>a.role==="staff"&&a.divisi==="Keuangan")};
-let db=null, unsubP=null, unsubL=null, unsubMP=null, unsubSP=null;
+let db=null, unsubP=null, unsubL=null, unsubMP=null, unsubSP=null, realtimeChannels=[];
 let S={user:null,bulan:new Date().getMonth(),tahun:new Date().getFullYear(),pekan:0,tab:"input",mgrTab:"myprog",search:"",fStat:"Semua",mgrStaffFilter:"",lapFilterStaff:"",programs:[],laporan:[],mgrProgs:[],sharedProgs:[],mgrView:"divisi",mgrDivisi:null,mgrStaff:null,mAction:null,mPid:null,lpPid:null,exportOpt:"periode",budgetRows:[],deletePid:null,revisiId:null,editData:null,shareProgId:null};
 
 function esc(t){return String(t||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
@@ -613,21 +613,31 @@ function setSyncStatus(s){const dot=document.getElementById("sync-dot"),lbl=docu
 function progCol(){return`programs_${S.tahun}_${S.bulan+1}`;}
 function lapCol(){return`laporan_${S.tahun}_${S.bulan+1}`;}
 function listenAll(){
-  realtimeChannels.forEach(ch=>{try{sb.removeChannel(ch);}catch(e){}});
-  realtimeChannels=[];
+  if(unsubP){try{unsubP();}catch(e){}}unsubP=null;
+  if(unsubL){try{unsubL();}catch(e){}}unsubL=null;
+  if(unsubMP){try{unsubMP();}catch(e){}}unsubMP=null;
+  if(unsubSP){try{unsubSP();}catch(e){}}unsubSP=null;
   if(!db)return;
-  loadAllData();
-  const ch1=sb.channel('prog-ch').on('postgres_changes',{event:'*',schema:'public',table:PROG_TABLE},()=>loadPrograms()).subscribe();
-  const ch2=sb.channel('lap-ch').on('postgres_changes',{event:'*',schema:'public',table:LAP_TABLE},()=>loadLaporan()).subscribe();
-  realtimeChannels=[ch1,ch2];
+  unsubP=db.collection(progCol()).onSnapshot(snap=>{
+    S.programs=snap.docs.map(d=>({id:d.id,...d.data()}));
+    S.programs.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+    render();
+  },err=>{console.error("programs error:",err);toast("Gagal load program","err");});
+  unsubL=db.collection(lapCol()).onSnapshot(snap=>{
+    S.laporan=snap.docs.map(d=>({id:d.id,...d.data()}));
+    S.laporan.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+    render();
+  },err=>{console.error("laporan error:",err);});
   if(S.user&&S.user.role==="direktur"){
-    const ch3=sb.channel('mgr-ch').on('postgres_changes',{event:'*',schema:'public',table:MGR_PROG_TABLE},()=>loadMgrProgs()).subscribe();
-    const ch4=sb.channel('shared-ch').on('postgres_changes',{event:'*',schema:'public',table:SHARED_TABLE},()=>loadSharedProgs()).subscribe();
-    realtimeChannels.push(ch3,ch4);
+    unsubMP=db.collection(mgrProgCol()).where("ownerNama","==",S.user.nama).onSnapshot(snap=>{
+      S.mgrProgs=snap.docs.map(d=>({id:d.id,...d.data()}));render();
+    },err=>console.error("mgrProgs:",err));
+    unsubSP=db.collection(sharedProgCol()).where("toNama","==",S.user.nama).onSnapshot(snap=>{
+      S.sharedProgs=snap.docs.map(d=>({id:d.id,...d.data()}));render();
+    },err=>console.error("sharedProgs:",err));
   }
 }
-function progCol(){return`programs_${S.tahun}_${S.bulan+1}`;}
-function lapCol(){return`laporan_${S.tahun}_${S.bulan+1}`;}
+
 function mgrProgCol(){return"mgr_programs_"+S.tahun+"_"+(S.bulan+1);}
 function sharedProgCol(){return"shared_programs";}
 
